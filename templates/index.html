@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="chatbot-container">
+    <div id="greeting">Hello, Divya Raj</div>
+    <div id="conversation"></div>
+    <form id="input-form" onsubmit="sendMessage(event)">
+      <input id="input-field" type="text" placeholder="Type your message here..." required />
+      <button id="submit-button" type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    let context = ""; // Store conversation history
+
+    const conversation = document.getElementById("conversation");
+    const inputField = document.getElementById("input-field");
+
+    function appendMessage(text, isUser = false) {
+      const messageElement = document.createElement("div");
+      messageElement.classList.add("chatbot-message");
+      messageElement.classList.add(isUser ? "user-message" : "bot-message");
+      messageElement.textContent = text;
+      conversation.appendChild(messageElement);
+      conversation.scrollTop = conversation.scrollHeight;
+    }
+
+    function sendMessage(event) {
+      event.preventDefault();
+      const userMessage = inputField.value;
+      appendMessage(userMessage, true);
+      inputField.value = "";
+
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage, context: context })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.response) {
+          appendMessage(data.response);
+          context += `User: ${userMessage}\nAI: ${data.response}\n`; // Update context
+        } else {
+          appendMessage("Error: Unable to get a response.");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        appendMessage("Something went wrong. Please try again.");
+      });
+    }
+  </script>
+</body>
+</html>
